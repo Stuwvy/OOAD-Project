@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Dashboard (static)</title>
+  <style>
+    :root{
+      --bg:#f4f6fb; --card:#fff; --muted:#6b7280; --accent:#1f6feb;
+      --sidebar:#f8fafc; --border: #e6eef8;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:#111;background:var(--bg)}
+    .app{display:flex;height:100vh;gap:20px;padding:18px}
+    /* LEFT SIDEBAR */
+    .sidebar{
+      width:300px; min-width:220px; background:var(--sidebar); border-radius:12px; padding:14px;
+      box-shadow:0 6px 18px rgba(20,20,40,0.04); border:1px solid var(--border);
+      display:flex;flex-direction:column;gap:12px;
+    }
+    .logo{display:flex;align-items:center;gap:10px;padding:6px 4px}
+    .logo .box{width:36px;height:36px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    .classes{overflow:auto;padding-right:6px}
+    .class-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer}
+    .class-item:hover{background:rgba(31,111,235,0.06)}
+    .class-item.active{background:var(--accent);color:#fff}
+    .class-avatar{width:36px;height:36px;border-radius:18px;background:#dbeafe;display:flex;align-items:center;justify-content:center;color:#0369a1;font-weight:600}
+    .class-meta{font-size:13px}
+    .small{font-size:12px;color:var(--muted)}
+    /* MAIN AREA */
+    .main{flex:1;display:flex;flex-direction:column;gap:16px}
+    .topbar{display:flex;justify-content:space-between;align-items:center}
+    .card{background:var(--card);border-radius:12px;padding:16px;border:1px solid var(--border);box-shadow:0 6px 18px rgba(20,20,40,0.03)}
+    .split{display:grid;grid-template-columns:1fr;gap:16px} /* stacked on mobile */
+    @media(min-width:900px){
+      .split{grid-template-columns:2fr 1fr}
+    }
+    /* assignment panel */
+    .assignment-title{font-size:18px;margin:0 0 8px}
+    .assignment-desc{color:var(--muted);margin:0 0 12px}
+    .file-link{display:inline-flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid var(--border);text-decoration:none;color:inherit}
+    .submit-area{margin-top:12px}
+    textarea{width:100%;min-height:120px;border-radius:8px;padding:10px;border:1px solid #e6eef8}
+    .btn{display:inline-block;padding:10px 14px;border-radius:8px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+    /* grades panel */
+    .grade-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:8px;border-bottom:1px dashed #f0f4fb}
+    .grade-badge{font-weight:700;padding:6px 10px;border-radius:8px;background:#eef2ff;color:#3730a3}
+    .no-data{color:var(--muted);padding:12px;text-align:center}
+    .submission-confirm{margin-top:8px;color:#065f46;background:#ecfdf5;border:1px solid #bbf7d0;padding:8px;border-radius:8px}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar" aria-label="Classes">
+      <div class="logo">
+        <div class="box">C</div>
+        <div>
+          <div style="font-weight:700">Classroom</div>
+          <div class="small">Student view</div>
+        </div>
+      </div>
+
+      <div class="small" style="padding:4px 4px 0 4px">Enrolled classes</div>
+      <div class="classes" id="classList" role="list" aria-label="Class list">
+        <!-- static example class items -->
+        <div class="class-item active">
+          <div class="class-avatar">M</div>
+          <div>
+            <div style="font-weight:600">Web Design</div>
+            <div class="small">Monday- 8:00am - 10:00am</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:auto" class="small">Logged in as <strong id="who">Student</strong></div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 style="margin:0">Student Dashboard</h1>
+          <div class="small" id="selectedClassSubtitle">Web Design</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn-ghost btn" id="refreshBtn" title="Static demo: does nothing">Refresh</button>
+        </div>
+      </div>
+
+      <!-- Split area: left=assignment view+submit, right=grades -->
+      <div class="split">
+        <!-- Assignment / Submit -->
+        <section class="card" id="assignmentPanel" aria-labelledby="assignmentTitle">
+          <div id="noClassSelected" class="no-data" style="display:none">Choose a class on the left to view current assignment.</div>
+
+          <div id="assignmentContent">
+            <h2 id="assignmentTitle" class="assignment-title">Major Assignment - Web</h2>
+            <p id="assignmentDue" class="small assignment-desc">Due: 2025-11-20</p>
+            <p id="assignmentDesc" class="assignment-desc">Create a group presentation to demo a result. Maximum 10 slides. Submit a link or short note below.</p>
+
+            <a id="assignmentFile" class="file-link" href="#" target="_blank" rel="noopener" onclick="return false;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="opacity:0.9">
+                <path d="M14 2H6C5 2 4 3 4 4v16c0 1 1 2 2 2h12c1 0 2-1 2-2V8l-6-6z" stroke="#1f6feb" stroke-width="1.2" fill="rgba(31,111,235,0.06)"/>
+                <path d="M14 2v6h6" stroke="#1f6feb" stroke-width="1.2" fill="none"/>
+              </svg>
+              <span id="assignmentFileName">Major-Assignment-slide.pdf</span>
+            </a>
+
+            <div class="submit-area">
+              <form id="submitForm">
+                <label class="small" style="display:block;margin-bottom:6px">Write your submission (or paste a link)</label>
+                <textarea id="submissionText" placeholder="Type your answer or paste a link to Google Drive / PDF"></textarea>
+                <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+                  <!-- Submit button (static demo) -->
+                  <button class="btn" type="submit">Submit assignment</button>
+
+                  <!-- Clear button -->
+                  <button type="button" class="btn-ghost btn" id="clearSubmission">Clear</button>
+                </div>
+              </form>
+
+              <!-- Static confirmation area (filled by small JS) -->
+              <div id="submissionStatus" class="small" style="margin-top:8px;color:var(--muted)"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Grades panel -->
+        <aside class="card" id="gradesPanel" aria-labelledby="gradesTitle">
+          <h3 style="margin:0 0 10px 0">Grades</h3>
+          <div id="gradesList">
+            <div class="grade-row">
+              <div>
+                <div style="font-weight:600">Assignment HTML</div>
+                <div class="small">Due: 2025-11-20</div>
+              </div>
+              <div><div class="grade-badge">B+</div></div>
+            </div>
+
+            <div class="grade-row">
+              <div>
+                <div style="font-weight:600">CSS Assignment</div>
+                <div class="small">Due: 2025-12-01</div>
+              </div>
+              <div><div class="small" style="color:var(--muted)">Not graded</div></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
